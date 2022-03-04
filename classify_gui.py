@@ -1,4 +1,4 @@
-from tkinter import Frame, LabelFrame, StringVar, IntVar, Label, Tk, Entry, Button, TclError, Scrollbar, Toplevel, Canvas, Checkbutton, Radiobutton,Menu
+from tkinter import Frame, LabelFrame, StringVar, IntVar, Label, Tk, Entry, Button, TclError, Scrollbar, Toplevel, Canvas, Checkbutton, Radiobutton,Menu,Text
 from tkinter.constants import *
 from tkinter import ttk
 from tkinter.filedialog import askopenfilename
@@ -19,6 +19,8 @@ from sklearn.metrics import confusion_matrix, classification_report, mean_absolu
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn import tree
+
 
 
 class MachineLearning:
@@ -51,167 +53,198 @@ class MachineLearning:
         self.window = Tk()
         self.color = 'dark orange'
         self.window.geometry('640x720')
-        self.window.resizable(False, False)
+        #self.window.resizable(False, False)
         self.window.configure(background=self.color)
         self.window.title('Classify')
         #self.window.iconbitmap('py.ico')
         
+        self.frame = Frame(self.window)
+        self.frame.pack(expand=True, fill=BOTH)
+
+        self.canvas = Canvas(self.frame,background='dark orange')
+
+        self.v_scroll = Scrollbar(self.frame, orient=VERTICAL, command=self.canvas.yview,background='black',activebackground='black')
+        self.v_scroll.pack(side=RIGHT,fill=Y)
+
+        self.canvas['yscrollcommand'] = self.v_scroll.set
+        self.canvas.pack(expand=True, fill=BOTH)
+
+        self.frame2 = Frame(self.canvas,bg='dark orange')
+        self.canvas.create_window((0, 0), window=self.frame2, anchor=N + W)
+
+        self.menubar = Menu(self.frame2,bg='black',fg='white')
+  
+        # Adding File Menu and commands
+        self.help = Menu(self.menubar, tearoff =0)
+        self.menubar.add_cascade(label ='Help', menu = self.help)
+        self.help.add_command(label ='Guide', command = lambda: self.readme())
+
+        self.window.config(menu = self.menubar)
+
         
         # File Selection and viewing
-        self.frame = LabelFrame(self.window, text='File Selection', bg=self.color)
-        self.frame.place(width=580, height=80, bordermode=OUTSIDE, x=20,y=10)
+        self.frame = LabelFrame(self.frame2, text='File Selection', bg=self.color)
+        self.frame.grid(row=0, columnspan=10, sticky='W',padx=20, pady=10)
 
         self.name_label = Label(self.frame, text="File Name : ", bg=self.color, padx=10, pady=10,
                                 font=("Helvetica", 12,'bold'))
-        self.name_label.place(width=120, height=20, bordermode=INSIDE, x=10, y=19)
+        self.name_label.grid(row=0, column=0, sticky='E', padx=10,pady=10)
 
         self.name = StringVar()
         self.name_entry = Entry(self.frame, exportselection=False, textvariable=self.name, font=("Helvetica", 12),state=DISABLED)
-        self.name_entry.place(width=250, height=30, bordermode=INSIDE, x=130, y=13)
+        self.name_entry.grid(columnspan=7,row=0, column=1,sticky= 'WE',pady=10)
 
         self.name_select = Button(self.frame, text='Select',fg='white',background='black', command=lambda: self.select())
-        self.name_select.place(width=50, height=30, bordermode=INSIDE, x=395, y=13)
+        self.name_select.grid(row=0,column=8,sticky=W,padx=10)
 
         self.df_show = Button(self.frame, text='Show',fg='white',background='black', command=lambda: self.create_table(), state=DISABLED)
-        self.df_show.place(width=50, height=30, bordermode=INSIDE, x=455, y=13)
+        self.df_show.grid(row=0,column=9,sticky=W,padx=10)
 
         self.df_hide = Button(self.frame, text='Reset',fg='white',background='black', command=lambda: self.hide(), state=DISABLED)
-        self.df_hide.place(width=50, height=30, bordermode=INSIDE, x=515, y=13)
+        self.df_hide.grid(row=0,column=10,sticky=W,padx=12)
 
         #Graphics
 
-        self.grap= LabelFrame(self.window, text='Visualisation',bg=self.color)
-        self.grap.place(width=580, height=80, bordermode=OUTSIDE, x=20, y=100)
+        self.grap= LabelFrame(self.frame2, text='Visualisation',bg=self.color)
+        self.grap.grid(row=1, columnspan=10, sticky='W',padx=20, pady=10)
 
         self.hist_plot = Button(self.grap, text='Histplot',fg='white',background='black', command=lambda: self.create_hplot(),state=DISABLED)
-        self.hist_plot.place(width=80, height=30, bordermode=INSIDE, x=10, y=13)
+        self.hist_plot.grid(row=0,column=0,sticky=W,padx=10,pady=10)
 
         self.heatmap = Button(self.grap, text='Heatmap',fg='white',background='black', command=lambda: self.create_hmap(),state=DISABLED)
-        self.heatmap.place(width=80, height=30, bordermode=INSIDE, x=110, y=13)
+        self.heatmap.grid(row=0,column=1,sticky=W,padx=5,pady=10)
 
         self.corr_plot = Button(self.grap, text='Correlation Plot',fg='white',background='black', command=lambda: self.create_cplot(),state=DISABLED)
-        self.corr_plot.place(width=120, height=30, bordermode=INSIDE, x=210, y=13)
+        self.corr_plot.grid(row=0,column=2,sticky=W,padx=5,pady=10)
 
         self.pair_plot = Button(self.grap, text='Pair Plot',fg='white',background='black', command=lambda: self.create_pplot(),state=DISABLED)
-        self.pair_plot.place(width=80, height=30, bordermode=INSIDE, x=350, y=13)
+        self.pair_plot.grid(row=0,column=3,sticky=W,padx=5,pady=10)
 
         self.feature_change = Button(self.grap, text='Feature Change',fg='white',background='black', command=lambda: self.feat_change(),state=DISABLED)
-        self.feature_change.place(width=120, height=30, bordermode=INSIDE, x=450, y=13)
+        self.feature_change.grid(row=0,column=4,sticky=W,padx=8,pady=10)
 
 
 
         # Train Test Split
-        self.ttsplit = LabelFrame(self.window, text='Train Test Split', bg=self.color)
-        self.ttsplit.place(width=580, height=80, bordermode=OUTSIDE, x=20, y=190)
+        self.ttsplit = LabelFrame(self.frame2, text='Train Test Split', bg=self.color)
+        self.ttsplit.grid(row=2, columnspan=10, sticky='W',padx=20, pady=10)
 
         self.select_x = Button(self.ttsplit, text='X',fg='white',background='black', command=lambda: self.get_x(), state=DISABLED)
-        self.select_x.place(width=80, height=30, bordermode=INSIDE, x=10, y=13)
+        self.select_x.grid(row=0,column=0,sticky=W,padx=10,pady=10,ipadx=10)
 
         self.select_y = Button(self.ttsplit, text='y',fg='white',background='black', command=lambda: self.get_y(), state=DISABLED)
-        self.select_y.place(width=80, height=30, bordermode=INSIDE, x=100, y=13)
+        self.select_y.grid(row=0,column=1,sticky=W,padx=10,pady=10,ipadx=10)
 
         self.test_size_label = Label(self.ttsplit, text=" Test Size: ", bg=self.color)
-        self.test_size_label.place(width=60, height=30, bordermode=INSIDE, x=200, y=13)
+        self.test_size_label.grid(row=0,column=2,sticky=W,padx=10,pady=10)
 
         self.test_size = StringVar()
         self.test_size.set('0.25')
-        self.test_size_entry = Entry(self.ttsplit, exportselection=False, textvariable=self.test_size,
+        self.test_size_entry = Entry(self.ttsplit, width=5, exportselection=False, textvariable=self.test_size,
                                      font=("Helvetica", 10))
-        self.test_size_entry.place(width=50, height=30, bordermode=INSIDE, x=260, y=13)
+        self.test_size_entry.grid(row=0,column=3,sticky=W,pady=10,ipady=5)
 
         self.rstate_label = Label(self.ttsplit, text="Random State : ", bg=self.color)
-        self.rstate_label.place(width=100, height=30, bordermode=INSIDE, x=330, y=13)
+        self.rstate_label.grid(row=0,column=4,sticky=W,padx=10, pady=10)
 
         self.rstate = StringVar()
         self.rstate.set('None')
-        self.rstate_entry = Entry(self.ttsplit, exportselection=False, textvariable=self.rstate, font=("Helvetica", 10))
-        self.rstate_entry.place(width=50, height=30, bordermode=INSIDE, x=430, y=13)
+        self.rstate_entry = Entry(self.ttsplit,width=5, exportselection=False, textvariable=self.rstate, font=("Helvetica", 10))
+        self.rstate_entry.grid(row=0,column=5,sticky=W,padx=5,pady=10,ipady=5,ipadx=5)
 
         self.split_button = Button(self.ttsplit, text='Split',fg='white',background='black', command=lambda: self.split(), state=DISABLED)
-        self.split_button.place(width=80, height=30, bordermode=INSIDE, x=490, y=13)
+        self.split_button.grid(row=0,column=6,sticky=W,padx=10,pady=10,ipadx=10)
 
         # SVM
-        self.svm = LabelFrame(self.window, text='SVM', bg=self.color)
-        self.svm.place(width=580, height=80, bordermode=OUTSIDE, x=20, y=280)
+        self.svm = LabelFrame(self.frame2, text='SVM', bg=self.color)
+        self.svm.grid(row=3, columnspan=10, sticky='W',padx=20, pady=10)
 
         self.svm_pred = Button(self.svm, text='Predict',fg='white',background='black', command=lambda: self.pred_svm(), state=DISABLED)
-        self.svm_pred.place(width=125, height=30, bordermode=INSIDE, x=8, y=13)
+        self.svm_pred.grid(row=0,column=0,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.svm_cm = Button(self.svm, text='Confusion Matrix',fg='white',background='black', command=lambda: self.cm_svm(), state=DISABLED)
-        self.svm_cm.place(width=125, height=30, bordermode=INSIDE, x=153, y=13)
+        self.svm_cm.grid(row=0,column=1,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.svm_cr = Button(self.svm, text='Classification Report',fg='white',background='black', command=lambda: self.cr_svm(), state=DISABLED)
-        self.svm_cr.place(width=140, height=30, bordermode=INSIDE, x=290, y=13)
+        self.svm_cr.grid(row=0,column=2,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.svm_error = Button(self.svm, text='Error',fg='white',background='black', command=lambda: self.errors_svm(), state=DISABLED)
-        self.svm_error.place(width=125, height=30, bordermode=INSIDE, x=443, y=13)
+        self.svm_error.grid(row=0,column=3,sticky=W,padx=10,pady=10,ipadx=16)
 
         # Logistic Regression
-        self.logreg = LabelFrame(self.window, text='Logistic Regression', bg=self.color)
-        self.logreg.place(width=580, height=80, bordermode=OUTSIDE, x=20, y=370)
+        self.logreg = LabelFrame(self.frame2, text='Logistic Regression', bg=self.color)
+        self.logreg.grid(row=4, columnspan=10, sticky='W',padx=20, pady=10)
 
         self.logreg_pred = Button(self.logreg, text='Predict',fg='white',background='black', command=lambda: self.pred_logreg(), state=DISABLED)
-        self.logreg_pred.place(width=125, height=30, bordermode=INSIDE, x=8, y=13)
+        self.logreg_pred.grid(row=0,column=0,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.logreg_cm = Button(self.logreg, text='Confusion Matrix',fg='white',background='black', command=lambda: self.cm_logreg(), state=DISABLED)
-        self.logreg_cm.place(width=125, height=30, bordermode=INSIDE, x=153, y=13)
+        self.logreg_cm.grid(row=0,column=1,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.logreg_cr = Button(self.logreg, text='Classification Report',fg='white',background='black', command=lambda: self.cr_logreg(), state=DISABLED)
-        self.logreg_cr.place(width=140, height=30, bordermode=INSIDE, x=290, y=13)
+        self.logreg_cr.grid(row=0,column=2,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.logreg_error = Button(self.logreg, text='Error',fg='white',background='black', command=lambda: self.errors_logreg(), state=DISABLED)
-        self.logreg_error.place(width=125, height=30, bordermode=INSIDE, x=443, y=13)
+        self.logreg_error.grid(row=0,column=3,sticky=W,padx=10,pady=10,ipadx=16)
 
         # Decision Tree
-        self.dtree = LabelFrame(self.window, text='Decision Tree', bg=self.color)
-        self.dtree.place(width=580, height=80, bordermode=OUTSIDE, x=20, y=460)
+        self.dtree = LabelFrame(self.frame2, text='Decision Tree', bg=self.color)
+        self.dtree.grid(row=5, columnspan=10, sticky='W',padx=20, pady=10)
 
         self.dtree_pred = Button(self.dtree, text='Predict',fg='white',background='black', command=lambda: self.pred_dtree(), state=DISABLED)
-        self.dtree_pred.place(width=125, height=30, bordermode=INSIDE, x=8, y=13)
+        self.dtree_pred.grid(row=0,column=0,sticky=W,padx=5,pady=10)
 
         self.dtree_cm = Button(self.dtree, text='Confusion Matrix',fg='white',background='black', command=lambda: self.cm_dtree(), state=DISABLED)
-        self.dtree_cm.place(width=125, height=30, bordermode=INSIDE, x=153, y=13)
+        self.dtree_cm.grid(row=0,column=1,sticky=W,padx=5,pady=10)
 
         self.dtree_cr = Button(self.dtree, text='Classification Report',fg='white',background='black', command=lambda: self.cr_dtree(), state=DISABLED)
-        self.dtree_cr.place(width=140, height=30, bordermode=INSIDE, x=290, y=13)
+        self.dtree_cr.grid(row=0,column=2,sticky=W,padx=5,pady=10)
 
         self.dtree_error = Button(self.dtree, text='Error',fg='white',background='black', command=lambda: self.errors_dtree(), state=DISABLED)
-        self.dtree_error.place(width=125, height=30, bordermode=INSIDE, x=443, y=13)
+        self.dtree_error.grid(row=0,column=3,sticky=W,padx=5,pady=10)
+
+        self.dtree_visual = Button(self.dtree, text='Tree Graph',fg='white',background='black', command=lambda: self.visual_dtree(), state=DISABLED)
+        self.dtree_visual.grid(row=0,column=4,sticky=W,padx=5,pady=10)
 
         # Random Forest
-        self.rforest = LabelFrame(self.window, text='Random Forest', bg=self.color)
-        self.rforest.place(width=580, height=80, bordermode=OUTSIDE, x=20, y=550)
+        self.rforest = LabelFrame(self.frame2, text='Random Forest', bg=self.color)
+        self.rforest.grid(row=6, columnspan=10, sticky='W',padx=20, pady=10)
 
         self.rforest_pred = Button(self.rforest, text='Predict',fg='white',background='black', command=lambda: self.pred_rforest(), state=DISABLED)
-        self.rforest_pred.place(width=125, height=30, bordermode=INSIDE, x=8, y=13)
+        self.rforest_pred.grid(row=0,column=0,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.rforest_cm = Button(self.rforest, text='Confusion Matrix',fg='white',background='black', command=lambda: self.cm_rforest(), state=DISABLED)
-        self.rforest_cm.place(width=125, height=30, bordermode=INSIDE, x=153, y=13)
+        self.rforest_cm.grid(row=0,column=1,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.rforest_cr = Button(self.rforest, text='Classification Report',fg='white',background='black', command=lambda: self.cr_rforest(), state=DISABLED)
-        self.rforest_cr.place(width=140, height=30, bordermode=INSIDE, x=290, y=13)
+        self.rforest_cr.grid(row=0,column=2,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.rforest_error = Button(self.rforest, text='Error',fg='white',background='black', command=lambda: self.errors_rforest(), state=DISABLED)
-        self.rforest_error.place(width=125, height=30, bordermode=INSIDE, x=443, y=13)
+        self.rforest_error.grid(row=0,column=3,sticky=W,padx=10,pady=10,ipadx=16)
 
         #Outcome Analysis
-        self.outcome = LabelFrame(self.window, text='Outcome Analysis', bg=self.color)
-        self.outcome.place(width=580, height=60, bordermode=OUTSIDE, x=20, y=640)
+        self.outcome = LabelFrame(self.frame2, text='Outcome Analysis', bg=self.color)
+        self.outcome.grid(row=7, columnspan=10, sticky='W',padx=20, pady=10)
 
         self.svm_shap = Button(self.outcome, text='SVM',fg='white',background='black', command=lambda: self.svm_create_splot(),state=DISABLED)
-        self.svm_shap.place(width=80, height=30, bordermode=INSIDE, x=10, y=5)
+        self.svm_shap.grid(row=0,column=0,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.log_shap = Button(self.outcome,fg='white',background='black', text='Logistic Regression', command=lambda: self.lr_create_splot(),state=DISABLED)
-        self.log_shap.place(width=150, height=30, bordermode=INSIDE, x=100, y=5)
+        self.log_shap.grid(row=0,column=1,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.dt_shap = Button(self.outcome,fg='white',background='black', text='Decision Tree', command=lambda: self.dt_create_splot(),state=DISABLED)
-        self.dt_shap.place(width=150, height=30, bordermode=INSIDE, x=260, y=5)
+        self.dt_shap.grid(row=0,column=2,sticky=W,padx=10,pady=10,ipadx=5)
 
         self.rf_shap = Button(self.outcome,fg='white',background='black', text='Random Forest', command=lambda: self.rf_create_splot(),state=DISABLED)
-        self.rf_shap.place(width=150, height=30, bordermode=INSIDE, x=420, y=5)
+        self.rf_shap.grid(row=0,column=3,sticky=W,padx=10,pady=10,ipadx=5)
         
-        
+        self.window.update()
+
+        self.canvas.configure(scrollregion=self.canvas.bbox(ALL))
         self.window.mainloop()
+
+    def readme(self):
+        self.create_readme= Readme(self.window)    
 
     def select(self):
         try:
@@ -259,6 +292,7 @@ class MachineLearning:
         self.dtree_cr['state'] = DISABLED
         self.dtree_cm['state'] = DISABLED
         self.dtree_error['state'] = DISABLED
+        self.dtree_visual['state'] = DISABLED
 
         self.rforest_pred['state'] = DISABLED
         self.rforest_cm['state'] = DISABLED
@@ -294,7 +328,7 @@ class MachineLearning:
         self.cplot= Cplot(self.data,self.window,self.y,self.X)
 
     def create_pplot(self):
-        self.pplot= Pplot(self.data,self.window,self.y)
+        self.pplot= Pplot(self.data,self.window,self.y,self.X)
 
     def feat_change(self):
         self.select_x['state']=NORMAL
@@ -427,6 +461,7 @@ class MachineLearning:
         self.dtree_cr['state'] = NORMAL
         self.dtree_cm['state'] = NORMAL
         self.dtree_error['state'] = NORMAL
+        self.dtree_visual['state'] = NORMAL
         self.dt_shap['state'] = NORMAL
 
     def cm_dtree(self):
@@ -438,6 +473,10 @@ class MachineLearning:
     def errors_dtree(self):
         temp = [mean_absolute_error(self.y_test, self.dtree_predictions), mean_squared_error(self.y_test, self.dtree_predictions), np.sqrt(mean_squared_error(self.y_test, self.dtree_predictions))]
         Errors(self.window, temp, 'Decision Tree')
+
+    def visual_dtree(self):
+        self.le.fit(self.data[self.y])
+        VisualGraph(self.window,self.dtree_model,self.X,self.le.classes_)    
 
     def dt_create_splot(self):
         self.le.fit(self.data[self.y])
@@ -470,6 +509,19 @@ class MachineLearning:
     def rf_create_splot(self):
         self.le.fit(self.data[self.y])
         SummaryPlot(self.window,self.rforest_model,self.X_train,self.X_test,'SVM',self.le.classes_)    
+class Readme:
+    def __init__(self,master):
+        self.master=master
+        self.window=Toplevel(self.master)
+        self.window.title("Guide to Classify")
+        self.window.geometry('400x400')
+
+        self.T = Text(self.window,wrap=WORD)
+        self.info = """ Step 1: Use select button to select a csv file.\n Step 2: Press show button to see 50 records of your dataset. RESET button is to start from scratch so press only when you want to change your file\n Step 3: You can go through histplot and heat map to check correlation throught whole data.\n Step 4: Accordingly select X features and target y variable. y must not be in X selected features\n Step 5: Check corr plot and pair plot and if you need to change features then click feature change button. These plots change when features selected are changed and its based upon your y variable.\n Step 6: Give test size and random state.Click split\n Step 7: CLick predict and give parameters as per your need. Only some important parameters are covered.\n Step 8: Check the results left of predict button and in the bottom 'Output analysis section'\n Step 9: Repeat for other algorithms"""
+
+        self.T.pack(side=LEFT,expand=True,fill=BOTH)
+        self.T.insert(END,self.info,)
+        self.window.mainloop()
 
 class SVC_predict_choice():
     def __init__(self,master):
@@ -783,18 +835,21 @@ class Cplot:
         self.canvas.get_tk_widget().pack(expand=True,fill=BOTH)
 
 class Pplot:
-    def __init__(self,data,master,target):
+    def __init__(self,data,master,target,features):
         self.master = master
         self.data = data
         self.target=target
+        self.features=features
 
         self.window = Toplevel(self.master)
         self.window.title("Pair Plot")
         self.window.geometry('900x600')
         self.window.configure(background='white')
         #self.window.resizable(False, False)
-        # 
-        self.sns_plot = sns.pairplot(data,hue=target,height=1.5)
+        p1=data[self.features]
+        p2=data[self.target]
+        p_merge=p1.merge(p2, how='inner',left_index=True,right_index=True)
+        self.sns_plot = sns.pairplot(p_merge,hue=self.target,height=1.5)
         #self.sns_plot.fig.set_size_inches(15,15)  
         self.sns_plot.savefig('plot.png')
         img = ImageTk.PhotoImage(Image.open('plot.png').resize((1280,720)))
@@ -962,6 +1017,7 @@ class SummaryPlot:
         self.model=model
         self.name = name
         self.labels = sorted(labels)
+        print(type(self.labels))
 
         self.explainer = shap.KernelExplainer(model.predict_proba, shap.sample(self.train,5))
         self.shap_values = self.explainer.shap_values(self.test)
@@ -1098,6 +1154,29 @@ class ClassificationReport:
             y = y + 30
 
         self.window.geometry('550x'+str(y))
+
+class VisualGraph:
+    def __init__(self,master,model,features,classes):
+        self.master=master
+        self.model=model
+        self.features=features
+        self.classes= list(map(str,classes))
+        print(self.classes)
+
+        self.window = Toplevel(self.master)
+        self.window.title("Histogram Plot")
+        self.window.configure(background='white')
+        #self.window.resizable(False, False)
+        
+
+        fig, axes = plt.subplots(nrows = 1,ncols = 1,figsize = (15,15), dpi=80,squeeze=False)
+        tree.plot_tree(model,feature_names= features,class_names=self.classes,filled=True)
+        fig.savefig('plot1.png')
+        img = ImageTk.PhotoImage(Image.open('plot1.png').resize((1280,720)))
+        self.vis = Label(self.window,image=img)
+        self.vis.image = img
+        self.vis.pack(side=TOP,expand=True,fill=BOTH)
+    
 
 if __name__ == '__main__':
     MachineLearning()
